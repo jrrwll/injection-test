@@ -1,0 +1,13 @@
+*.db
+*.lnk
+*~
+.idea/
+*.iml
+*.iws
+*.ipr
+out
+.gradle
+build
+.DS_Store
+http-client.private.env.json
+local.properties
