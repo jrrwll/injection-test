@@ -23,11 +23,11 @@ class SpringTest {
 
     @Test
     void test1() {
-        helloService.say("jerry");
+        System.out.println(helloService.say("jerry"));;
     }
 
     @Test
     void test2() {
-        helloService.say("1314");
+        System.out.println(helloService.say("1314"));;
     }
 }

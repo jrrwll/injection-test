@@ -15,16 +15,20 @@ version '0.1'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
+jar.enabled = true
+bootJar.enabled = false
 
 ext {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    slf4jVersion = "1.7.36"
+    slf4jVersion = "1.7.36" // 2.0.5
     // https://mvnrepository.com/artifact/org.projectlombok/lombok
-    lombokVersion = "1.18.22"
+    lombokVersion = "1.18.24"
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
-    junitVersion = "5.8.2"
+    junitVersion = "5.9.1"
+    // https://mvnrepository.com/artifact/org.junit.platform/junit-platform-commons
+    junitPlatformVersion = "1.9.1"
     // https://mvnrepository.com/artifact/org.openjdk.jmh/jmh-core
-    jmhVersion = "1.35"
+    jmhVersion = "1.36"
 }
 
 dependencies {
@@ -35,16 +39,18 @@ dependencies {
     implementation "org.slf4j:slf4j-api:$slf4jVersion"
     testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
     implementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+    implementation "org.junit.platform:junit-platform-commons:$junitPlatformVersion"
+
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     testImplementation "org.openjdk.jmh:jmh-core:$jmhVersion"
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
 
     implementation "org.dreamcat:common-core:0.3"
+    compileOnly 'org.springframework.boot:spring-boot'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 
     testImplementation "org.springframework.boot:spring-boot"
     testImplementation "org.springframework.boot:spring-boot-autoconfigure"
-    testImplementation "org.springframework.boot:spring-boot-test"
 }
 
 test {
