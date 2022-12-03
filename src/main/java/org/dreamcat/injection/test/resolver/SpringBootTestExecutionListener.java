@@ -15,6 +15,7 @@ import org.dreamcat.injection.test.context.TestExecutionListenerManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
@@ -83,8 +84,11 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 .addResourceMapping(Configuration.class, Configuration::value)
                 .addResourceMapping(Repository.class, Repository::value)
                 .addResourceMapping(Controller.class, Controller::value)
+                // Note that Spring @Bean is supported partially
+                .addResourceMapping(Bean.class, it -> it.name().length > 0 ? it.name()[0] : "")
                 .addResourceMapping(SpringBootApplication.class, it -> "")
-                .addInjectMapping(Autowired.class, Qualifier.class, Qualifier::value)
+                .addInjectMapping(Autowired.class, it -> "")
+                .addInjectMapping(Qualifier.class, Qualifier::value)
                 .disableFailOnNotFound();
 
         if (javaxResourceClass != null) {

@@ -29,6 +29,8 @@ ext {
     junitPlatformVersion = "1.9.1"
     // https://mvnrepository.com/artifact/org.openjdk.jmh/jmh-core
     jmhVersion = "1.36"
+    // https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
+    mockitoVersion = "4.9.0"
 }
 
 dependencies {
@@ -51,6 +53,9 @@ dependencies {
 
     testImplementation "org.springframework.boot:spring-boot"
     testImplementation "org.springframework.boot:spring-boot-autoconfigure"
+    testImplementation "org.springframework.boot:spring-boot-test"
+    testImplementation "org.springframework:spring-test"
+    testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
 }
 
 test {

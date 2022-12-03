@@ -21,7 +21,12 @@ public class HelloServiceImpl implements HelloService {
     final ParamChecker paramChecker;
 
     @Override
-    public String say(String name) {
-        return "Hello " + name;
+    public void say(String name) {
+        try {
+            paramChecker.checkName(name);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        System.out.println("Hello " + name);
     }
 }

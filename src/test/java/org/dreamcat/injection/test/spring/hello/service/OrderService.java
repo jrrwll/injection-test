@@ -4,7 +4,7 @@ package org.dreamcat.injection.test.spring.hello.service;
  * @author Jerry Will
  * @version 2022-10-13
  */
-public interface HelloService {
+public interface OrderService {
 
-    void say(String name);
+    void borrow(String uid, String bookName);
 }

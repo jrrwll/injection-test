@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
@@ -16,18 +17,19 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication(scanBasePackageClasses = {HelloApp.class})
 @ExtendWith(InjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SpringTest {
+class InjectionExtensionTest {
 
     @Autowired
+    @Qualifier("helloServiceImpl")
     HelloService helloService;
 
     @Test
     void test1() {
-        System.out.println(helloService.say("jerry"));;
+        helloService.say("jerry");
     }
 
     @Test
     void test2() {
-        System.out.println(helloService.say("1314"));;
+        helloService.say("1314");
     }
 }

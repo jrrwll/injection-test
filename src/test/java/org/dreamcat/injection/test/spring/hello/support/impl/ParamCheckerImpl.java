@@ -5,6 +5,8 @@ import org.dreamcat.common.util.NumberUtil;
 import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.injection.test.spring.hello.dao.HelloDao;
 import org.dreamcat.injection.test.spring.hello.support.ParamChecker;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 /**
