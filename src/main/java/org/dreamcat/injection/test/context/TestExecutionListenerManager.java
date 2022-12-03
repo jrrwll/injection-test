@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.dreamcat.common.util.ExceptionUtil;
+import org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener;
 
 /**
  * @author Jerry Will
@@ -13,15 +14,14 @@ import org.dreamcat.common.util.ExceptionUtil;
 @Slf4j
 public class TestExecutionListenerManager {
 
-    private static final Class<?> springBootListenerClass = findResolverClass(
-            "org.springframework.boot.autoconfigure.SpringBootApplication",
-            "org.dreamcat.jwrap.test.resolver.SpringBootTestExecutionListener");
+    private static final Class<? extends TestExecutionListener> springBootListenerClass =
+            findResolverClass("org.springframework.boot.autoconfigure.SpringBootApplication");
 
-    private static Class<?> findResolverClass(
-            String annotationClassName, String resolverClassName) {
+    private static Class<? extends TestExecutionListener> findResolverClass(
+            String annotationClassName) {
         try {
             Class.forName(annotationClassName);
-            return Class.forName(resolverClassName);
+            return SpringBootTestExecutionListener.class;
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -29,21 +29,20 @@ public class TestExecutionListenerManager {
 
     public static List<TestExecutionListener> resolveTestExecutionListeners(Class<?> testClass) {
         List<TestExecutionListener> listeners = new ArrayList<>();
-        // TestExecutionListener resolve(Class<?> testClass)
         resolveTestExecutionListener(springBootListenerClass, testClass, listeners);
         return listeners;
     }
 
     private static void resolveTestExecutionListener(
-            Class<?> resolverClass, Class<?> testClass, List<TestExecutionListener> listeners) {
+            Class<? extends TestExecutionListener> resolverClass,
+            Class<?> testClass, List<TestExecutionListener> listeners) {
         if (resolverClass == null) return;
         try {
             Method method = resolverClass.getDeclaredMethod("resolve", Class.class);
             TestExecutionListener listener = (TestExecutionListener) method.invoke(null, testClass);
-            listeners.add(listener);
+            if (listener != null) listeners.add(listener);
         } catch (Throwable e) {
-            // nop
-            if (log.isErrorEnabled()) {
+            if (log.isWarnEnabled()) {
                 log.error(String.format("Caught exception while resolve '%s' on for test class [%s]",
                         resolverClass.getName(), testClass), e);
             }

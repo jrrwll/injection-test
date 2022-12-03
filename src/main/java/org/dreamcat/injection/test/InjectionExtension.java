@@ -46,7 +46,6 @@ public class InjectionExtension implements
         getTestContextManager(context).prepareTestInstance(testInstance);
     }
 
-
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
         Object testInstance = context.getRequiredTestInstance();

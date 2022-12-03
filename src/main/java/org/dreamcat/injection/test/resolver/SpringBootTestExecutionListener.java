@@ -9,6 +9,7 @@ import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.common.util.ReflectUtil;
 import org.dreamcat.injection.test.context.TestContext;
 import org.dreamcat.injection.test.context.TestExecutionListener;
+import org.dreamcat.injection.test.context.TestExecutionListenerManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -21,8 +22,16 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
     private final Set<String> basePackageSet = new HashSet<>();
     private final InjectionFactory di = new InjectionFactory();
 
+    /**
+     * maybe return null if the spring annotations aren't found
+     *
+     * @param testClass test class
+     * @return the instance of {@link SpringBootTestExecutionListener}
+     * @see TestExecutionListenerManager#resolveTestExecutionListeners(Class)
+     */
     public static TestExecutionListener resolve(Class<?> testClass) {
-        SpringBootApplication sba = ReflectUtil.retrieveAnnotation(testClass, SpringBootApplication.class);
+        SpringBootApplication sba = ReflectUtil.retrieveAnnotation(
+                testClass, SpringBootApplication.class);
         if (sba == null) return null;
         return new SpringBootTestExecutionListener(sba, testClass);
     }
@@ -66,7 +75,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         try {
             Class res = Class.forName("javax.annotation.Resource");
             if (field.getAnnotation(res) != null) return true;
-        } catch (ClassNotFoundException ignore) {}
+        } catch (ClassNotFoundException ignore) {
+        }
 
         return false;
     }
