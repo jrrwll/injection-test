@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 /**
  * @author Jerry Will
@@ -22,6 +23,8 @@ class InjectionExtensionTest {
     @Autowired
     @Qualifier("helloServiceImpl")
     HelloService helloService;
+    @MockBean
+    HelloService helloService2;
 
     @Test
     void test1() {
@@ -30,6 +33,6 @@ class InjectionExtensionTest {
 
     @Test
     void test2() {
-        helloService.say("1314");
+        helloService2.say("1314");
     }
 }

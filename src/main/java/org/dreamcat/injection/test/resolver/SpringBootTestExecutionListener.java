@@ -32,7 +32,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class SpringBootTestExecutionListener implements TestExecutionListener {
 
-    private final Class<?> testClass;
     private final InjectionFactory di;
 
     /**
@@ -53,10 +52,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         return new SpringBootTestExecutionListener(testClass, sba, cs);
     }
 
-
     private SpringBootTestExecutionListener(
             Class<?> testClass, SpringBootApplication sba, ComponentScan cs) throws Exception {
-        this.testClass = testClass;
         String[] basePackages;
         Class<?>[] basePackageClasses;
         if (sba != null) {
@@ -88,13 +85,15 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 .addResourceMapping(Bean.class, it -> it.name().length > 0 ? it.name()[0] : "")
                 .addResourceMapping(SpringBootApplication.class, it -> "")
                 .addInjectMapping(Autowired.class, it -> "")
-                .addInjectMapping(Qualifier.class, Qualifier::value)
-                .disableFailOnNotFound();
+                .addInjectMapping(Qualifier.class, Qualifier::value);
 
         if (javaxResourceClass != null) {
             builder.addInjectMapping(javaxResourceClass,
                     ann -> (String) ReflectUtil.invoke(ann, "name"));
             builder.addPostConstruct(javaxPostConstructClass);
+        }
+        if (springMockBeanClass != null) {
+            builder.addMockInjectMapping(springMockBeanClass);
         }
         this.di = builder.build();
         try {
@@ -116,6 +115,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             findClass("javax.annotation.Resource");
     private static final Class javaxPostConstructClass =
             findClass("javax.annotation.PostConstruct");
+    private static final Class springMockBeanClass =
+            findClass("org.springframework.boot.test.mock.mockito.MockBean");
 
     private static Class findClass(String name) {
         try {
