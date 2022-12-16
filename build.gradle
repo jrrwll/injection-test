@@ -31,6 +31,8 @@ ext {
     jmhVersion = "1.36"
     // https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
     mockitoVersion = "4.9.0"
+    // https://mvnrepository.com/artifact/org.javassist/javassist
+    javassistVersion = '3.29.0-GA'
 }
 
 dependencies {
@@ -48,6 +50,8 @@ dependencies {
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
 
     implementation "org.dreamcat:common-core:0.3"
+    implementation "org.dreamcat:common-asm:0.3"
+    implementation "org.javassist:javassist:$javassistVersion"
     compileOnly 'org.springframework.boot:spring-boot'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 
