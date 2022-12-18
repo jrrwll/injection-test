@@ -1,5 +1,6 @@
 package org.dreamcat.injection.test.spring.hello.service.impl;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dreamcat.injection.test.spring.hello.service.HealthService;
@@ -23,6 +24,7 @@ public class HealthServiceImpl implements HealthService {
     @Component
     @RequiredArgsConstructor
     public static class Jerry {
+
         private final Tom tom;
     }
 
@@ -30,18 +32,19 @@ public class HealthServiceImpl implements HealthService {
     @Component
     @RequiredArgsConstructor
     public static class Tom {
+
         private final Harry harry;
     }
 
-    @Getter
+    @Data
     @Component
     public static class Harry {
-        private final Jerry jerry;
 
+        private Jerry jerry;
 
-        public Harry(
-                @Lazy Jerry jerry) {
-            this.jerry = jerry;
-        }
+        // circular reference
+        // public Harry(@Lazy Jerry jerry) {
+        //     this.jerry = jerry;
+        // }
     }
 }
