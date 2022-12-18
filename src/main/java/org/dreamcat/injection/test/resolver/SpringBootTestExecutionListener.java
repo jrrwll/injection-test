@@ -1,5 +1,6 @@
 package org.dreamcat.injection.test.resolver;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -96,6 +97,16 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         if (springMockBeanClass != null) {
             builder.addMockInjectMapping(springMockBeanClass);
         }
+        if (mockitoClass != null) {
+            builder.mockGenerator(clazz -> {
+                try {
+                    Method method = mockitoClass.getDeclaredMethod("mock");
+                    return method.invoke(null, clazz);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
         this.di = builder.build();
         try {
             this.di.refresh();
@@ -118,6 +129,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             findClass("javax.annotation.PostConstruct");
     private static final Class springMockBeanClass =
             findClass("org.springframework.boot.test.mock.mockito.MockBean");
+    private static final Class mockitoClass =
+            findClass("org.mockito.Mockito");
 
     private static Class findClass(String name) {
         try {
