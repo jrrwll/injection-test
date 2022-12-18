@@ -6,7 +6,6 @@ import java.util.Set;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dreamcat.common.asm.JavassistUtil;
 import org.dreamcat.common.di.InjectionFactory;
 import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.common.util.ReflectUtil;
@@ -72,14 +71,11 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             for (Class<?> basePackageClass : basePackageClasses) {
                 basePackageSet.add(basePackageClass.getPackage().getName());
             }
-        } /*else {
+        } else {
             basePackageSet.add(testClass.getPackage().getName());
-        }*/
-
-        Set<Class<?>> dependencies = JavassistUtil.retrieveDependencies(testClass);
+        }
         InjectionFactory.Builder builder = InjectionFactory.builder()
                 .basePackage(basePackageSet)
-                .targetClasses(dependencies)
                 .addResourceMapping(Component.class, Component::value)
                 .addResourceMapping(Service.class, Service::value)
                 .addResourceMapping(Configuration.class, Configuration::value)
@@ -125,7 +121,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
     private static Class findClass(String name) {
         try {
             return Class.forName(name);
-        }catch (ClassNotFoundException ignore) {
+        } catch (ClassNotFoundException ignore) {
             return null;
         }
     }

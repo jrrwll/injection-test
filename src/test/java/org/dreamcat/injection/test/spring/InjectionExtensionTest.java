@@ -1,7 +1,6 @@
 package org.dreamcat.injection.test.spring;
 
 import org.dreamcat.injection.test.InjectionExtension;
-import org.dreamcat.injection.test.spring.hello.HelloApp;
 import org.dreamcat.injection.test.spring.hello.service.HelloService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -15,7 +14,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
  * @author Jerry Will
  * @version 2022-10-13
  */
-@SpringBootApplication(scanBasePackageClasses = {HelloApp.class})
+@SpringBootApplication
+// @SpringBootApplication(scanBasePackageClasses = {HelloApp.class})
 @ExtendWith(InjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InjectionExtensionTest {
