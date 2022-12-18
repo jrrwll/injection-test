@@ -75,6 +75,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             basePackageSet.add(testClass.getPackage().getName());
         }
         InjectionFactory.Builder builder = InjectionFactory.builder()
+                .disableFailOnThrow()
                 .basePackage(basePackageSet)
                 .addResourceMapping(Component.class, Component::value)
                 .addResourceMapping(Service.class, Service::value)
