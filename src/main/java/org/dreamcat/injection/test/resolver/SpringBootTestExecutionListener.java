@@ -1,15 +1,19 @@
 package org.dreamcat.injection.test.resolver;
 
+import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERN;
+
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dreamcat.common.di.InjectionFactory;
 import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.common.util.ReflectUtil;
+import org.dreamcat.common.util.StringUtil;
 import org.dreamcat.injection.test.context.TestContext;
 import org.dreamcat.injection.test.context.TestExecutionListener;
 import org.dreamcat.injection.test.context.TestExecutionListenerManager;
@@ -86,8 +90,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 // Note that Spring @Bean is supported partially
                 .addResourceMapping(Bean.class, it -> it.name().length > 0 ? it.name()[0] : "")
                 .addResourceMapping(SpringBootApplication.class, it -> "")
-                .addInjectMapping(Autowired.class, it -> "")
-                .addInjectMapping(Qualifier.class, Qualifier::value);
+                .addInjectMapping(Qualifier.class, Qualifier::value)
+                .addInjectMapping(Autowired.class, it -> "");
 
         if (javaxResourceClass != null) {
             builder.addInjectMapping(javaxResourceClass,
@@ -100,27 +104,31 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         if (mockitoClass != null) {
             builder.mockGenerator(clazz -> {
                 try {
-                    Method method = mockitoClass.getDeclaredMethod("mock");
+                    Method method = mockitoClass.getDeclaredMethod("mock", Class.class);
                     return method.invoke(null, clazz);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             });
         }
-        this.di = builder.build();
-        try {
-            this.di.refresh();
-        } catch (Exception e) {
-            log.error("di failed: " + e.getMessage(), e);
+        String ignoreClassPattern = INJECTION_TEST_IGNORE_CLASS_PATTERN.get();
+        if (StringUtil.isNotEmpty(ignoreClassPattern)) {
+            builder.ignorePredicate(clazz -> clazz.getName().matches(ignoreClassPattern));
         }
+        this.di = builder.build();
     }
 
     @Override
     public void prepareTestInstance(TestContext testContext) throws Exception {
         Class<?> testClass = testContext.getTestClass();
         Object testInstance = testContext.getTestInstance();
-        testContext.getTestInstance();
-        di.injectFields(testClass, testInstance);
+        try {
+            di.resolveMockBeans(testClass, testInstance);
+            di.refresh();
+            di.resolveFields(testClass, testInstance);
+        } catch (Exception e) {
+            log.error("di failed for injection test: " + e.getMessage(), e);
+        }
     }
 
     private static final Class javaxResourceClass =
@@ -137,6 +145,23 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             return Class.forName(name);
         } catch (ClassNotFoundException ignore) {
             return null;
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    enum EnvOrProperty {
+        // INJECTION_TEST_IGNORE_CLASS_PATTERN=^.*?Test$
+        INJECTION_TEST_IGNORE_CLASS_PATTERN(
+                "org.dreamcat.injection.test.ignore_class_pattern"),
+        ;
+
+        private final String propertyName;
+
+        public String get() {
+            String v = System.getenv(name());
+            if (StringUtil.isNotEmpty(v)) return v;
+            return System.getProperty(propertyName);
         }
     }
 }
