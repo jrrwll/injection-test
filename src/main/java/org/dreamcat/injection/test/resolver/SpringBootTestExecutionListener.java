@@ -9,6 +9,7 @@ import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.dreamcat.common.di.InjectionFactory;
 import org.dreamcat.common.util.ObjectUtil;
@@ -98,18 +99,12 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                     ann -> (String) ReflectUtil.invoke(ann, "name"));
             builder.addPostConstruct(javaxPostConstructClass);
         }
-        if (springMockBeanClass != null) {
-            builder.addMockInjectMapping(springMockBeanClass);
-        }
-        if (mockitoClass != null) {
-            builder.mockGenerator(clazz -> {
-                try {
-                    Method method = mockitoClass.getDeclaredMethod("mock", Class.class);
-                    return method.invoke(null, clazz);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+        if (springMockBeanClass != null && springSpyBeanClass != null &&
+                mockitoClass != null) {
+            builder.addMockInjectMapping(springMockBeanClass,
+                    clazz -> mock("mock", clazz));
+            builder.addMockInjectMapping(springSpyBeanClass,
+                    clazz -> mock("spy", clazz));
         }
         String ignoreClassPattern = INJECTION_TEST_IGNORE_CLASS_PATTERN.get();
         if (StringUtil.isNotEmpty(ignoreClassPattern)) {
@@ -135,10 +130,12 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             findClass("javax.annotation.Resource");
     private static final Class javaxPostConstructClass =
             findClass("javax.annotation.PostConstruct");
-    private static final Class springMockBeanClass =
-            findClass("org.springframework.boot.test.mock.mockito.MockBean");
     private static final Class mockitoClass =
             findClass("org.mockito.Mockito");
+    private static final Class springMockBeanClass =
+            findClass("org.springframework.boot.test.mock.mockito.MockBean");
+    private static final Class springSpyBeanClass =
+            findClass("org.springframework.boot.test.mock.mockito.SpyBean");
 
     private static Class findClass(String name) {
         try {
@@ -163,5 +160,11 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             if (StringUtil.isNotEmpty(v)) return v;
             return System.getProperty(propertyName);
         }
+    }
+
+    @SneakyThrows
+    private Object mock(String name, Class<?> clazz) {
+        Method method = mockitoClass.getDeclaredMethod(name, Class.class);
+        return method.invoke(null, clazz);
     }
 }
