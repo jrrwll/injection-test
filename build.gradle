@@ -50,8 +50,6 @@ dependencies {
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
 
     implementation "org.dreamcat:common-core:0.3"
-    implementation "org.dreamcat:common-asm:0.3"
-    implementation "org.javassist:javassist:$javassistVersion"
     compileOnly 'org.springframework.boot:spring-boot'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 

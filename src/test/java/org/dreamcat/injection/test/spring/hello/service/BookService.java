@@ -10,5 +10,7 @@ public interface BookService {
 
     void addBook(String name);
 
+    Map<String, Object> addAndGetBook(String name);
+
     Map<String, Object> getBook(String name);
 }
