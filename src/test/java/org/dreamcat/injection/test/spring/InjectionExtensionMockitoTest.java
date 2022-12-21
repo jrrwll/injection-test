@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import java.util.Collections;
 import java.util.Map;
 import org.dreamcat.injection.test.InjectionExtension;
+import org.dreamcat.injection.test.spring.hello.service.BookService;
 import org.dreamcat.injection.test.spring.hello.service.HelloService;
 import org.dreamcat.injection.test.spring.hello.service.impl.BookServiceImpl;
 import org.junit.jupiter.api.Assertions;
@@ -49,5 +50,13 @@ class InjectionExtensionMockitoTest {
         map = bookService.addAndGetBook("1314");
         System.out.println(map);
         Assertions.assertTrue(!map.containsKey("name") && map.containsKey("desc"));
+    }
+
+    @Test
+    void test3() {
+        BookService bookService2 = Mockito.mock(BookService.class);
+        Map<String, Object> map = bookService2.addAndGetBook("jerry");
+        Assertions.assertTrue(map.isEmpty());
+        System.out.println(map);
     }
 }

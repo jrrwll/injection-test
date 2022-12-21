@@ -1,12 +1,18 @@
 package org.dreamcat.injection.test.resolver;
 
+import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER;
 import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERN;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +22,7 @@ import org.dreamcat.common.di.InjectionFactory;
 import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.common.util.ReflectUtil;
 import org.dreamcat.common.util.StringUtil;
+import org.dreamcat.common.util.SystemUtil;
 import org.dreamcat.injection.test.context.TestContext;
 import org.dreamcat.injection.test.context.TestExecutionListener;
 import org.dreamcat.injection.test.context.TestExecutionListenerManager;
@@ -113,9 +120,22 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             builder.addSpyInjectMapping(spyClass, this::spy);
         }
 
+        List<Predicate<Class<?>>> ignorePredicates = new ArrayList<>();
         String ignoreClassPattern = INJECTION_TEST_IGNORE_CLASS_PATTERN.get();
         if (StringUtil.isNotEmpty(ignoreClassPattern)) {
-            builder.ignorePredicate(clazz -> clazz.getName().matches(ignoreClassPattern));
+            ignorePredicates.add(clazz -> clazz.getName().matches(ignoreClassPattern));
+        }
+        String disableDynamicClassFilter = INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER.get();
+        if (!StringUtil.isTrueString(disableDynamicClassFilter)) {
+            ignorePredicates.add(this::isDynamicClass);
+        }
+        if (!ignorePredicates.isEmpty()) {
+            builder.ignorePredicate(clazz -> {
+                for (Predicate<Class<?>> ignorePredicate : ignorePredicates) {
+                    if (ignorePredicate.test(clazz)) return true;
+                }
+                return false;
+            });
         }
         this.di = builder.build();
     }
@@ -165,12 +185,24 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             ann -> (String) ReflectUtil.invoke(ann, "name");
     private static final Function<Object, String> emptyNameGetter = ann -> "";
 
+    private boolean isDynamicClass(Class<?> clazz) {
+        if (Proxy.isProxyClass(clazz)) return true;
+        String className = clazz.getSimpleName();
+        if (generatedClassName.matcher(className).matches()) return true;
+        return className.contains("$$"); // maybe cglib
+    }
+
+    private static final Pattern generatedClassName = Pattern.compile("^.*?\\$.*?\\$\\d+$");
+
     @Getter
     @RequiredArgsConstructor
     enum EnvOrProperty {
         // INJECTION_TEST_IGNORE_CLASS_PATTERN=^.*?Test$
         INJECTION_TEST_IGNORE_CLASS_PATTERN(
                 "org.dreamcat.injection.test.ignore_class_pattern"),
+        // INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER=1
+        INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER(
+                "org.dreamcat.injection.test.disable_dynamic_class_filter"),
         ;
 
         private final String propertyName;
