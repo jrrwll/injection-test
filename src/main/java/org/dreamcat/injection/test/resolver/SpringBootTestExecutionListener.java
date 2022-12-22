@@ -119,18 +119,13 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         if (springMockBeanClass != null && springSpyBeanClass != null &&
                 mockitoClass != null) {
             builder.addMockInjectMapping(springMockBeanClass, nameGetter, this::mock);
-
-            builder.addInjectMapping(springSpyBeanClass, (Function) nameGetter);
-            builder.addSpyInjectMapping(springSpyBeanClass, this::spy);
+            builder.addSpyInjectMapping(springSpyBeanClass, nameGetter, this::spy);
         }
         if (mockitoClass != null) {
             builder.addMockInjectMapping(mockClass, nameGetter, this::mock);
-
-            builder.addInjectMapping(spyClass, (Function) emptyNameGetter);
-            builder.addSpyInjectMapping(spyClass, this::spy);
+            builder.addSpyInjectMapping(spyClass, emptyNameGetter, this::spy);
         }
         configIgnorePredicate(builder);
-
         this.di = builder.build();
     }
 
@@ -140,9 +135,12 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         Object testInstance = testContext.getTestInstance();
         try {
             di.resolveMockBeans(testClass, testInstance);
-            di.refresh();
+            di.refreshConstruct();
+
             di.resolveFields(testClass, testInstance);
             di.resolveSpyBeans(testClass, testInstance);
+
+            di.refreshPostConstruct();
         } catch (Exception e) {
             log.error("di failed for injection test: " + e.getMessage(), e);
         }

@@ -1,4 +1,4 @@
-package org.dreamcat.injection.test.spring;
+package org.dreamcat.injection.test.spring.generated;
 
 import static org.dreamcat.common.util.RandomUtil.choose26;
 import static org.dreamcat.common.util.RandomUtil.chooseOne;
@@ -34,7 +34,7 @@ public class SpringProjectGen {
         String dao_temp = ClassPathUtil.getResourceAsString("dao.java");
 
         String testSrcDir = new File("build/generated/java").getCanonicalPath();
-        String packageName = "org.dreamcat.generated";
+        String packageName = SpringProjectGen.class.getPackage().getName();
         String packageDir = testSrcDir + "/" + packageName.replace(".", "/");
 
         Set<String> entityNames = genNames(entity_count);
