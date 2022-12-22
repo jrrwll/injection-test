@@ -18,6 +18,15 @@ targetCompatibility = JavaVersion.VERSION_1_8
 jar.enabled = true
 bootJar.enabled = false
 
+sourceSets {
+    test {
+        java {
+            srcDir 'src/test/java'
+            srcDir 'build/generated/java'
+        }
+    }
+}
+
 ext {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     slf4jVersion = "1.7.36" // 2.0.5
@@ -41,7 +50,6 @@ dependencies {
     testCompileOnly "org.projectlombok:lombok:$lombokVersion"
     testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
     implementation "org.slf4j:slf4j-api:$slf4jVersion"
-    testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
     implementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     implementation "org.junit.platform:junit-platform-commons:$junitPlatformVersion"
 
@@ -58,6 +66,9 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.springframework:spring-test"
     testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-web"
+    testImplementation "org.springframework.boot:spring-boot-starter-jdbc"
 }
 
 test {

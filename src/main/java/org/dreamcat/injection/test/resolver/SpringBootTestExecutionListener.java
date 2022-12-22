@@ -1,11 +1,11 @@
 package org.dreamcat.injection.test.resolver;
 
-import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER;
-import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERN;
+import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_ENABLE_SIMPLE_CONVENTION;
+import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERNS;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,6 @@ import org.dreamcat.common.di.InjectionFactory;
 import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.common.util.ReflectUtil;
 import org.dreamcat.common.util.StringUtil;
-import org.dreamcat.common.util.SystemUtil;
 import org.dreamcat.injection.test.context.TestContext;
 import org.dreamcat.injection.test.context.TestExecutionListener;
 import org.dreamcat.injection.test.context.TestExecutionListenerManager;
@@ -93,19 +93,29 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 .basePackage(basePackageSet)
                 .addResourceMapping(Component.class, Component::value)
                 .addResourceMapping(Service.class, Service::value)
-                .addResourceMapping(Configuration.class, Configuration::value)
-                .addResourceMapping(Repository.class, Repository::value)
-                .addResourceMapping(Controller.class, Controller::value)
                 // Note that Spring @Bean is supported partially
                 .addResourceMapping(Bean.class, it -> it.name().length > 0 ? it.name()[0] : "")
-                .addResourceMapping(SpringBootApplication.class, (Function) emptyNameGetter)
                 .addInjectMapping(Qualifier.class, Qualifier::value)
                 .addInjectMapping(Autowired.class, (Function) emptyNameGetter);
+
+        boolean enableSimpleConvention = StringUtil.isTrueString(
+                INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get());
+        if (!enableSimpleConvention) {
+            builder.addResourceMapping(Configuration.class, Configuration::value)
+                    .addResourceMapping(Repository.class, Repository::value)
+                    .addResourceMapping(Controller.class, Controller::value)
+                    .addResourceMapping(SpringBootApplication.class, (Function) emptyNameGetter);
+
+            if (springRestControllerClass != null) {
+                builder.addResourceMapping(springRestControllerClass, (Function)valueGetter);
+            }
+        }
 
         if (javaxResourceClass != null) {
             builder.addInjectMapping(javaxResourceClass, (Function) nameGetter);
             builder.addPostConstruct(javaxPostConstructClass);
         }
+
         if (springMockBeanClass != null && springSpyBeanClass != null &&
                 mockitoClass != null) {
             builder.addMockInjectMapping(springMockBeanClass, nameGetter, this::mock);
@@ -119,24 +129,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             builder.addInjectMapping(spyClass, (Function) emptyNameGetter);
             builder.addSpyInjectMapping(spyClass, this::spy);
         }
+        configIgnorePredicate(builder);
 
-        List<Predicate<Class<?>>> ignorePredicates = new ArrayList<>();
-        String ignoreClassPattern = INJECTION_TEST_IGNORE_CLASS_PATTERN.get();
-        if (StringUtil.isNotEmpty(ignoreClassPattern)) {
-            ignorePredicates.add(clazz -> clazz.getName().matches(ignoreClassPattern));
-        }
-        String disableDynamicClassFilter = INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER.get();
-        if (!StringUtil.isTrueString(disableDynamicClassFilter)) {
-            ignorePredicates.add(this::isDynamicClass);
-        }
-        if (!ignorePredicates.isEmpty()) {
-            builder.ignorePredicate(clazz -> {
-                for (Predicate<Class<?>> ignorePredicate : ignorePredicates) {
-                    if (ignorePredicate.test(clazz)) return true;
-                }
-                return false;
-            });
-        }
         this.di = builder.build();
     }
 
@@ -168,6 +162,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             ReflectUtil.forNameOrNull("org.springframework.boot.test.mock.mockito.MockBean");
     private static final Class springSpyBeanClass =
             ReflectUtil.forNameOrNull("org.springframework.boot.test.mock.mockito.SpyBean");
+    private static final Class springRestControllerClass =
+            ReflectUtil.forNameOrNull("org.springframework.web.bind.annotation.RestController");
 
     @SneakyThrows
     private Object mock(Class<?> clazz) {
@@ -183,26 +179,19 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
 
     private static final Function<Object, String> nameGetter =
             ann -> (String) ReflectUtil.invoke(ann, "name");
+    private static final Function<Object, String> valueGetter =
+            ann -> (String) ReflectUtil.invoke(ann, "value");
     private static final Function<Object, String> emptyNameGetter = ann -> "";
-
-    private boolean isDynamicClass(Class<?> clazz) {
-        if (Proxy.isProxyClass(clazz)) return true;
-        String className = clazz.getSimpleName();
-        if (generatedClassName.matcher(className).matches()) return true;
-        return className.contains("$$"); // maybe cglib
-    }
-
-    private static final Pattern generatedClassName = Pattern.compile("^.*?\\$.*?\\$\\d+$");
 
     @Getter
     @RequiredArgsConstructor
     enum EnvOrProperty {
-        // INJECTION_TEST_IGNORE_CLASS_PATTERN=^.*?Test$
-        INJECTION_TEST_IGNORE_CLASS_PATTERN(
-                "org.dreamcat.injection.test.ignore_class_pattern"),
-        // INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER=1
-        INJECTION_TEST_DISABLE_DYNAMIC_CLASS_FILTER(
-                "org.dreamcat.injection.test.disable_dynamic_class_filter"),
+        // INJECTION_TEST_ENABLE_SIMPLE_CONVENTION=1
+        INJECTION_TEST_ENABLE_SIMPLE_CONVENTION(
+                "org.dreamcat.injection.test.enable_simple_convention"),
+        // INJECTION_TEST_IGNORE_CLASS_PATTERNS=^.*?Test$
+        INJECTION_TEST_IGNORE_CLASS_PATTERNS(
+                "org.dreamcat.injection.test.ignore_class_patterns"),
         ;
 
         private final String propertyName;
@@ -213,4 +202,40 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             return System.getProperty(propertyName);
         }
     }
+
+    private void configIgnorePredicate(InjectionFactory.Builder builder) {
+        List<Predicate<Class<?>>> ignorePredicates = new ArrayList<>();
+        String ignoreClassPatterns = INJECTION_TEST_IGNORE_CLASS_PATTERNS.get();
+        List<Pattern> patterns = new ArrayList<>();
+        if (StringUtil.isNotEmpty(ignoreClassPatterns)) {
+            patterns.addAll(Arrays.stream(ignoreClassPatterns.split(","))
+                    .filter(StringUtil::isNotEmpty)
+                    .map(Pattern::compile).collect(Collectors.toList()));
+        }
+        String enableSimpleConvention = INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get();
+        if (StringUtil.isTrueString(enableSimpleConvention)) {
+            patterns.add(generatedClassName1);
+            patterns.add(generatedClassName2);
+        }
+        if (!patterns.isEmpty()) {
+            ignorePredicates.add(clazz -> {
+                String name = clazz.getName();
+                for (Pattern pattern : patterns) {
+                    if (pattern.matcher(name).matches()) return true;
+                }
+                return false;
+            });
+        }
+        if (!ignorePredicates.isEmpty()) {
+            builder.ignorePredicate(clazz -> {
+                for (Predicate<Class<?>> ignorePredicate : ignorePredicates) {
+                    if (ignorePredicate.test(clazz)) return true;
+                }
+                return false;
+            });
+        }
+    }
+
+    private static final Pattern generatedClassName1 = Pattern.compile("^.*?\\$.*?\\$\\d+$");
+    private static final Pattern generatedClassName2 = Pattern.compile("^.*?\\$\\$.*?$");
 }
