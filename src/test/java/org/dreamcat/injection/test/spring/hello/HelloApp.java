@@ -1,14 +1,11 @@
 package org.dreamcat.injection.test.spring.hello;
 
-import org.dreamcat.injection.test.spring.hello.dao.HelloDao;
 import org.dreamcat.injection.test.spring.hello.service.BookService;
 import org.dreamcat.injection.test.spring.hello.service.HelloService;
 import org.dreamcat.injection.test.spring.hello.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
 
 /**
  * @author Jerry Will

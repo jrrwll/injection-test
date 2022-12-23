@@ -107,7 +107,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                     .addResourceMapping(SpringBootApplication.class, (Function) emptyNameGetter);
 
             if (springRestControllerClass != null) {
-                builder.addResourceMapping(springRestControllerClass, (Function)valueGetter);
+                builder.addResourceMapping(springRestControllerClass, (Function) valueGetter);
             }
         }
 

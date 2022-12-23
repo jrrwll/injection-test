@@ -54,7 +54,7 @@ public class SpringProjectGen {
                             entity_temp, Collections.singletonMap("fields", fields)), m));
 
             FileUtil.writeFrom(new File(getBaseDir(packageDir, "controller"),
-                    entityName + "Controller.java"),
+                            entityName + "Controller.java"),
                     InterpolationUtil.format(ctrl_temp, m));
 
             FileUtil.writeFrom(new File(getBaseDir(packageDir, "service"),
@@ -114,7 +114,7 @@ public class SpringProjectGen {
     private static Set<String> genNames(int count) {
         Set<String> names = new HashSet<>();
         for (int i = 0; i < count; i++) {
-            for (;;) {
+            for (; ; ) {
                 String name = genName();
                 if (names.add(name)) break;
             }

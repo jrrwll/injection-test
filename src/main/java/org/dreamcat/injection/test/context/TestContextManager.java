@@ -195,9 +195,11 @@ public class TestContextManager {
         this.getTestContext().updateState(testInstance, testMethod, testException);
     }
 
-    private void logException(Throwable ex, String callbackName, TestExecutionListener testExecutionListener, Class<?> testClass) throws Exception {
+    private void logException(Throwable ex, String callbackName, TestExecutionListener testExecutionListener,
+            Class<?> testClass) throws Exception {
         if (log.isWarnEnabled()) {
-            log.warn(String.format("Caught exception while invoking '%s' callback on TestExecutionListener [%s] for test class [%s]",
+            log.warn(String.format(
+                    "Caught exception while invoking '%s' callback on TestExecutionListener [%s] for test class [%s]",
                     callbackName, testExecutionListener, testClass), ex);
         }
     }

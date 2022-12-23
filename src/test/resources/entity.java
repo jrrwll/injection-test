@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class $Entity {
 
-$fields
+    $fields
 }

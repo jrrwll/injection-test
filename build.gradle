@@ -11,7 +11,7 @@ repositories {
 }
 
 group 'org.dreamcat'
-version '0.1'
+version '0.0.1'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -29,7 +29,7 @@ sourceSets {
 
 ext {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    slf4jVersion = "1.7.36" // 2.0.5
+    slf4jVersion = "1.7.36"
     // https://mvnrepository.com/artifact/org.projectlombok/lombok
     lombokVersion = "1.18.24"
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
