@@ -1,5 +1,6 @@
 package org.dreamcat.injection.test.resolver;
 
+import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_BASE_PACKAGES;
 import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_ENABLE_SIMPLE_CONVENTION;
 import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERNS;
 
@@ -55,27 +56,33 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
      * @return the instance of {@link SpringBootTestExecutionListener}
      * @see TestExecutionListenerManager#resolveTestExecutionListeners(Class)
      */
-    public static TestExecutionListener resolve(Class<?> testClass) throws Exception {
+    public static TestExecutionListener resolve(Class<?> testClass) {
         SpringBootApplication sba = ReflectUtil.retrieveAnnotation(
                 testClass, SpringBootApplication.class);
         ComponentScan cs = ReflectUtil.retrieveAnnotation(
                 testClass, ComponentScan.class);
+        String[] defaultBasePackages = null;
         if (sba == null && cs == null) {
-            return null;
+            String basePackages = INJECTION_TEST_BASE_PACKAGES.get();
+            if (StringUtil.isEmpty(basePackages)) return null;
+            defaultBasePackages = basePackages.split(",");
         }
-        return new SpringBootTestExecutionListener(testClass, sba, cs);
+        return new SpringBootTestExecutionListener(testClass, sba, cs, defaultBasePackages);
     }
 
     private SpringBootTestExecutionListener(
-            Class<?> testClass, SpringBootApplication sba, ComponentScan cs) throws Exception {
+            Class<?> testClass, SpringBootApplication sba, ComponentScan cs,
+            String[] defaultBasePackages) {
         String[] basePackages;
-        Class<?>[] basePackageClasses;
+        Class<?>[] basePackageClasses = null;
         if (sba != null) {
             basePackages = sba.scanBasePackages();
             basePackageClasses = sba.scanBasePackageClasses();
-        } else {
+        } else if (cs != null) {
             basePackages = cs.basePackages();
             basePackageClasses = cs.basePackageClasses();
+        } else {
+            basePackages = defaultBasePackages;
         }
 
         Set<String> basePackageSet = new HashSet<>();
@@ -184,6 +191,9 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
     @Getter
     @RequiredArgsConstructor
     enum EnvOrProperty {
+        // INJECTION_TEST_BASE_PACKAGES=org.myorg.a,org.myorg.b
+        INJECTION_TEST_BASE_PACKAGES(
+                "org.dreamcat.injection.test.base_packages"),
         // INJECTION_TEST_ENABLE_SIMPLE_CONVENTION=1
         INJECTION_TEST_ENABLE_SIMPLE_CONVENTION(
                 "org.dreamcat.injection.test.enable_simple_convention"),

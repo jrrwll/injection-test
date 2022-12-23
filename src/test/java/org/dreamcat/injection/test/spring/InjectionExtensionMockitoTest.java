@@ -23,7 +23,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
  * @author Jerry Will
  * @version 2022-10-13
  */
-@SpringBootApplication
+// INJECTION_TEST_BASE_PACKAGES=org.dreamcat.injection.test.spring
+// @SpringBootApplication
 @ExtendWith(InjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InjectionExtensionMockitoTest {
