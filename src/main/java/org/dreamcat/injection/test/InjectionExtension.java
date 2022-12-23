@@ -3,7 +3,10 @@ package org.dreamcat.injection.test;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
 import org.dreamcat.injection.test.context.TestContextManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -22,10 +25,17 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor;
  * @author Jerry Will
  * @version 2022-10-13
  */
+@RequiredArgsConstructor
 public class InjectionExtension implements
         BeforeAllCallback, AfterAllCallback, TestInstancePostProcessor,
         BeforeEachCallback, AfterEachCallback,
         BeforeTestExecutionCallback, AfterTestExecutionCallback, ParameterResolver {
+
+    private final Map<String, String> properties;
+
+    public InjectionExtension() {
+        this(new HashMap<>());
+    }
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
@@ -107,4 +117,37 @@ public class InjectionExtension implements
 
     private static final ExtensionContext.Namespace TEST_CONTEXT_MANAGER_NAMESPACE =
             Namespace.create(InjectionExtension.class);
+
+    public InjectionExtension property(String name, String value) {
+        properties.put(name, value);
+        return this;
+    }
+
+    /**
+     * @return {@link InjectionExtension.Builder}
+     * @see org.junit.jupiter.api.extension.RegisterExtension
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /*
+    @RegisterExtension
+    static InjectionExtension extension = InjectionExtension.builder()
+        .property("", "")
+        .build();
+     */
+    public static class Builder {
+
+        InjectionExtension instance = new InjectionExtension();
+
+        public Builder property(String name, String value) {
+            instance.properties.put(name, value);
+            return this;
+        }
+
+        public InjectionExtension build() {
+            return instance;
+        }
+    }
 }
