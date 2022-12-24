@@ -4,7 +4,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.dreamcat.common.util.ExceptionUtil;
 
@@ -19,13 +21,13 @@ public class TestContextManager {
     private final ThreadLocal<TestContext> testContextHolder;
     private final List<TestExecutionListener> testExecutionListeners;
 
-    public TestContextManager(Class<?> testClass) {
+    public TestContextManager(Class<?> testClass, Map<String, String> properties) {
         this.testContext = new DefaultTestContext(testClass);
         this.testContextHolder = ThreadLocal.withInitial(
                 TestContextManager.this.testContext::copy);
         this.testExecutionListeners = new ArrayList<>();
         this.registerTestExecutionListeners(
-                TestExecutionListenerManager.resolveTestExecutionListeners(testClass));
+                TestExecutionListenerManager.resolveTestExecutionListeners(testClass, properties));
     }
 
     public void registerTestExecutionListeners(List<TestExecutionListener> testExecutionListeners) {

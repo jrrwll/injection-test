@@ -3,10 +3,10 @@ package org.dreamcat.injection.test;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
 import org.dreamcat.injection.test.context.TestContextManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -25,7 +25,6 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor;
  * @author Jerry Will
  * @version 2022-10-13
  */
-@RequiredArgsConstructor
 public class InjectionExtension implements
         BeforeAllCallback, AfterAllCallback, TestInstancePostProcessor,
         BeforeEachCallback, AfterEachCallback,
@@ -34,7 +33,12 @@ public class InjectionExtension implements
     private final Map<String, String> properties;
 
     public InjectionExtension() {
-        this(new HashMap<>());
+        this(Collections.emptyMap());
+    }
+
+    public InjectionExtension(Map<String, String> properties) {
+        // copy properties and freeze it
+        this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     }
 
     @Override
@@ -104,11 +108,12 @@ public class InjectionExtension implements
         return null;
     }
 
-    static TestContextManager getTestContextManager(ExtensionContext context) {
+    private TestContextManager getTestContextManager(ExtensionContext context) {
         Objects.requireNonNull(context, "ExtensionContext must not be null");
         Class<?> testClass = context.getRequiredTestClass();
         ExtensionContext.Store store = getStore(context);
-        return store.getOrComputeIfAbsent(testClass, TestContextManager::new, TestContextManager.class);
+        return store.getOrComputeIfAbsent(testClass, k -> new TestContextManager(k, properties),
+                TestContextManager.class);
     }
 
     private static ExtensionContext.Store getStore(ExtensionContext context) {
@@ -117,11 +122,6 @@ public class InjectionExtension implements
 
     private static final ExtensionContext.Namespace TEST_CONTEXT_MANAGER_NAMESPACE =
             Namespace.create(InjectionExtension.class);
-
-    public InjectionExtension property(String name, String value) {
-        properties.put(name, value);
-        return this;
-    }
 
     /**
      * @return {@link InjectionExtension.Builder}
@@ -138,16 +138,15 @@ public class InjectionExtension implements
         .build();
      */
     public static class Builder {
-
-        InjectionExtension instance = new InjectionExtension();
+        private final Map<String, String> properties = new HashMap<>();
 
         public Builder property(String name, String value) {
-            instance.properties.put(name, value);
+            properties.put(name, value);
             return this;
         }
 
         public InjectionExtension build() {
-            return instance;
+            return new InjectionExtension(properties);
         }
     }
 }

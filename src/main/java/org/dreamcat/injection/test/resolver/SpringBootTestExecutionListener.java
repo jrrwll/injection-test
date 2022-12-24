@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -54,24 +55,26 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
      *
      * @param testClass test class
      * @return the instance of {@link SpringBootTestExecutionListener}
-     * @see TestExecutionListenerManager#resolveTestExecutionListeners(Class)
+     * @see TestExecutionListenerManager#resolveTestExecutionListeners(Class, Map)
      */
-    public static TestExecutionListener resolve(Class<?> testClass) {
+    public static TestExecutionListener resolve(
+            Class<?> testClass, Map<String, String> properties) {
         SpringBootApplication sba = ReflectUtil.retrieveAnnotation(
                 testClass, SpringBootApplication.class);
         ComponentScan cs = ReflectUtil.retrieveAnnotation(
                 testClass, ComponentScan.class);
         String[] defaultBasePackages = null;
         if (sba == null && cs == null) {
-            String basePackages = INJECTION_TEST_BASE_PACKAGES.get();
+            String basePackages = INJECTION_TEST_BASE_PACKAGES.get(properties);
             if (StringUtil.isEmpty(basePackages)) return null;
             defaultBasePackages = basePackages.split(",");
         }
-        return new SpringBootTestExecutionListener(testClass, sba, cs, defaultBasePackages);
+        return new SpringBootTestExecutionListener(
+                testClass, properties, sba, cs, defaultBasePackages);
     }
 
     private SpringBootTestExecutionListener(
-            Class<?> testClass, SpringBootApplication sba, ComponentScan cs,
+            Class<?> testClass, Map<String, String> properties, SpringBootApplication sba, ComponentScan cs,
             String[] defaultBasePackages) {
         String[] basePackages;
         Class<?>[] basePackageClasses = null;
@@ -106,7 +109,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 .addInjectMapping(Autowired.class, (Function) emptyNameGetter);
 
         boolean enableSimpleConvention = StringUtil.isTrueString(
-                INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get());
+                INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get(properties));
         if (!enableSimpleConvention) {
             builder.addResourceMapping(Configuration.class, Configuration::value)
                     .addResourceMapping(Repository.class, Repository::value)
@@ -132,7 +135,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             builder.addMockInjectMapping(mockClass, nameGetter, this::mock);
             builder.addSpyInjectMapping(spyClass, emptyNameGetter, this::spy);
         }
-        configIgnorePredicate(builder);
+        configIgnorePredicate(builder, properties);
         this.di = builder.build();
     }
 
@@ -204,23 +207,28 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
 
         private final String propertyName;
 
-        public String get() {
-            String v = System.getenv(name());
+        public String get(Map<String, String> properties) {
+            String v = properties.get(name());
+            if (StringUtil.isNotEmpty(v)) return v;
+            v = properties.get(propertyName);
+            if (StringUtil.isNotEmpty(v)) return v;
+            v = System.getenv(name());
             if (StringUtil.isNotEmpty(v)) return v;
             return System.getProperty(propertyName);
         }
     }
 
-    private void configIgnorePredicate(InjectionFactory.Builder builder) {
+    private void configIgnorePredicate(
+            InjectionFactory.Builder builder, Map<String, String> properties) {
         List<Predicate<Class<?>>> ignorePredicates = new ArrayList<>();
-        String ignoreClassPatterns = INJECTION_TEST_IGNORE_CLASS_PATTERNS.get();
+        String ignoreClassPatterns = INJECTION_TEST_IGNORE_CLASS_PATTERNS.get(properties);
         List<Pattern> patterns = new ArrayList<>();
         if (StringUtil.isNotEmpty(ignoreClassPatterns)) {
             patterns.addAll(Arrays.stream(ignoreClassPatterns.split(","))
                     .filter(StringUtil::isNotEmpty)
                     .map(Pattern::compile).collect(Collectors.toList()));
         }
-        String enableSimpleConvention = INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get();
+        String enableSimpleConvention = INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get(properties);
         if (StringUtil.isTrueString(enableSimpleConvention)) {
             patterns.add(generatedClassName1);
             patterns.add(generatedClassName2);

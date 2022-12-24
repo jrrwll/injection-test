@@ -3,6 +3,7 @@ package org.dreamcat.injection.test.context;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.dreamcat.common.util.ExceptionUtil;
 import org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener;
@@ -27,19 +28,20 @@ public class TestExecutionListenerManager {
         }
     }
 
-    public static List<TestExecutionListener> resolveTestExecutionListeners(Class<?> testClass) {
+    public static List<TestExecutionListener> resolveTestExecutionListeners(Class<?> testClass, Map<String, String> properties) {
         List<TestExecutionListener> listeners = new ArrayList<>();
-        resolveTestExecutionListener(springBootListenerClass, testClass, listeners);
+        resolveTestExecutionListener(springBootListenerClass, properties, testClass, listeners);
         return listeners;
     }
 
     private static void resolveTestExecutionListener(
             Class<? extends TestExecutionListener> resolverClass,
+            Map<String, String> properties,
             Class<?> testClass, List<TestExecutionListener> listeners) {
         if (resolverClass == null) return;
         try {
-            Method method = resolverClass.getDeclaredMethod("resolve", Class.class);
-            TestExecutionListener listener = (TestExecutionListener) method.invoke(null, testClass);
+            Method method = resolverClass.getDeclaredMethod("resolve", Class.class, Map.class);
+            TestExecutionListener listener = (TestExecutionListener) method.invoke(null, testClass, properties);
             if (listener != null) listeners.add(listener);
         } catch (Throwable e) {
             if (log.isWarnEnabled()) {
