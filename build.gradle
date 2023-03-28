@@ -31,17 +31,17 @@ ext {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     slf4jVersion = "1.7.36"
     // https://mvnrepository.com/artifact/org.projectlombok/lombok
-    lombokVersion = "1.18.24"
+    lombokVersion = "1.18.26"
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
-    junitVersion = "5.9.1"
+    junitVersion = "5.9.2"
     // https://mvnrepository.com/artifact/org.junit.platform/junit-platform-commons
-    junitPlatformVersion = "1.9.1"
+    junitPlatformVersion = "1.9.2"
     // https://mvnrepository.com/artifact/org.openjdk.jmh/jmh-core
     jmhVersion = "1.36"
     // https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
-    mockitoVersion = "4.9.0"
+    mockitoVersion = "5.2.0"
     // https://mvnrepository.com/artifact/org.javassist/javassist
-    javassistVersion = '3.29.0-GA'
+    javassistVersion = '3.29.2-GA'
 }
 
 dependencies {
@@ -57,7 +57,7 @@ dependencies {
     testImplementation "org.openjdk.jmh:jmh-core:$jmhVersion"
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
 
-    implementation "org.dreamcat:common-core:0.3.1"
+    implementation "org.dreamcat:common:0.4"
     compileOnly 'org.springframework.boot:spring-boot'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 

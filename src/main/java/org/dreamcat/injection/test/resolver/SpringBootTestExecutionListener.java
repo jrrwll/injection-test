@@ -125,6 +125,11 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             builder.addInjectMapping(javaxResourceClass, (Function) nameGetter);
             builder.addPostConstruct(javaxPostConstructClass);
         }
+        // JSR-330
+        if (javaxInjectInjectClass != null) {
+            builder.addInjectMapping(javaxInjectInjectClass, (Function) emptyNameGetter);
+            builder.addResourceMapping(javaxInjectNamedClass, (Function) valueGetter);
+        }
 
         if (springMockBeanClass != null && springSpyBeanClass != null &&
                 mockitoClass != null) {
@@ -160,6 +165,10 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             ReflectUtil.forNameOrNull("javax.annotation.Resource");
     private static final Class javaxPostConstructClass =
             ReflectUtil.forNameOrNull("javax.annotation.PostConstruct");
+    private static final Class javaxInjectInjectClass =
+            ReflectUtil.forNameOrNull("javax.inject.Inject"); // inject beans
+    private static final Class javaxInjectNamedClass =
+            ReflectUtil.forNameOrNull("javax.inject.Named"); // define beans
     private static final Class mockitoClass =
             ReflectUtil.forNameOrNull("org.mockito.Mockito");
     private static final Class mockClass =
