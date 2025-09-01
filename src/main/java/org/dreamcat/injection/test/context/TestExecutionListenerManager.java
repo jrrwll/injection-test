@@ -48,7 +48,7 @@ public class TestExecutionListenerManager {
                 log.error(String.format("Caught exception while resolve '%s' on for test class [%s]",
                         resolverClass.getName(), testClass), e);
             }
-            ExceptionUtil.rethrowRuntimeException(e);
+            ExceptionUtil.rethrow(e);
         }
     }
 }

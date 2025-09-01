@@ -57,7 +57,7 @@ dependencies {
     testImplementation "org.openjdk.jmh:jmh-core:$jmhVersion"
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
 
-    implementation "org.dreamcat:common:0.4"
+    implementation "org.dreamcat:common:0.5-SNAPSHOT"
     compileOnly 'org.springframework.boot:spring-boot'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 

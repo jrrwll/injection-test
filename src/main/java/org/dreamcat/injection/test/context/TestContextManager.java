@@ -69,7 +69,7 @@ public class TestContextManager {
                 listener.beforeTestClass(this.getTestContext());
             } catch (Throwable e) {
                 logException(e, "beforeTestClass", listener, testClass);
-                ExceptionUtil.rethrowException(e);
+                ExceptionUtil.rethrow(e);
             }
         }
     }
@@ -99,7 +99,7 @@ public class TestContextManager {
             } catch (Throwable e) {
                 logException(e, "beforeTestMethod",
                         listener, this.getTestContext().getTestClass());
-                ExceptionUtil.rethrowException(e);
+                ExceptionUtil.rethrow(e);
             }
         }
     }
@@ -113,7 +113,7 @@ public class TestContextManager {
             } catch (Throwable e) {
                 logException(e, "beforeTestExecution",
                         listener, this.getTestContext().getTestClass());
-                ExceptionUtil.rethrowException(e);
+                ExceptionUtil.rethrow(e);
             }
         }
     }
@@ -136,7 +136,7 @@ public class TestContextManager {
             }
         }
         if (ex != null) {
-            ExceptionUtil.rethrowException(ex);
+            ExceptionUtil.rethrow(ex);
         }
     }
 
@@ -158,7 +158,7 @@ public class TestContextManager {
             }
         }
         if (ex != null) {
-            ExceptionUtil.rethrowException(ex);
+            ExceptionUtil.rethrow(ex);
         }
     }
 
@@ -185,7 +185,7 @@ public class TestContextManager {
         }
         this.testContextHolder.remove();
         if (ex != null) {
-            ExceptionUtil.rethrowException(ex);
+            ExceptionUtil.rethrow(ex);
         }
     }
 

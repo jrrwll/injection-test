@@ -99,8 +99,8 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             basePackageSet.add(testClass.getPackage().getName());
         }
         InjectionFactory.Builder builder = InjectionFactory.builder()
-                .disableFailOnThrow()
-                .basePackage(basePackageSet)
+                .failOnThrow(false)
+                .addBasePackage(basePackageSet)
                 .addResourceMapping(Component.class, Component::value)
                 .addResourceMapping(Service.class, Service::value)
                 // Note that Spring @Bean is supported partially
@@ -150,12 +150,12 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         Object testInstance = testContext.getTestInstance();
         try {
             di.resolveMockBeans(testClass, testInstance);
-            di.refreshConstruct();
+            di.resolveConstruct();
 
             di.resolveFields(testClass, testInstance);
             di.resolveSpyBeans(testClass, testInstance);
 
-            di.refreshPostConstruct();
+            di.resolvePostConstruct();
         } catch (Exception e) {
             log.error("di failed for injection test: " + e.getMessage(), e);
         }
