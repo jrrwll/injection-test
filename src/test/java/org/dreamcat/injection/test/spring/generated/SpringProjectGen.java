@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.dreamcat.common.io.ClassPathUtil;
+import org.dreamcat.common.util.ClassLoaderUtil;
 import org.dreamcat.common.io.FileUtil;
 import org.dreamcat.common.text.InterpolationUtil;
 import org.dreamcat.common.util.MapUtil;
@@ -27,11 +27,11 @@ public class SpringProjectGen {
     private static final int entity_count = 20;
 
     public static void main(String[] args) throws Exception {
-        String entity_temp = ClassPathUtil.getResourceAsString("entity.java");
-        String ctrl_temp = ClassPathUtil.getResourceAsString("controller.java");
-        String svc_temp = ClassPathUtil.getResourceAsString("service.java");
-        String impl_temp = ClassPathUtil.getResourceAsString("impl.java");
-        String dao_temp = ClassPathUtil.getResourceAsString("dao.java");
+        String entity_temp = ClassLoaderUtil.getResourceAsString("entity.java");
+        String ctrl_temp = ClassLoaderUtil.getResourceAsString("controller.java");
+        String svc_temp = ClassLoaderUtil.getResourceAsString("service.java");
+        String impl_temp = ClassLoaderUtil.getResourceAsString("impl.java");
+        String dao_temp = ClassLoaderUtil.getResourceAsString("dao.java");
 
         String testSrcDir = new File("build/generated/java").getCanonicalPath();
         String packageName = SpringProjectGen.class.getPackage().getName();
@@ -48,16 +48,16 @@ public class SpringProjectGen {
             String fields = genNames(randi(1, 10)).stream()
                     .map(it -> "    private " + genFieldType() + " " + it + ";")
                     .collect(Collectors.joining("\n"));
-            FileUtil.writeFrom(new File(getBaseDir(packageDir, "entity"),
+            FileUtil.write(new File(getBaseDir(packageDir, "entity"),
                             entityName + ".java"),
                     InterpolationUtil.format(InterpolationUtil.format(
                             entity_temp, Collections.singletonMap("fields", fields)), m));
 
-            FileUtil.writeFrom(new File(getBaseDir(packageDir, "controller"),
+            FileUtil.write(new File(getBaseDir(packageDir, "controller"),
                             entityName + "Controller.java"),
                     InterpolationUtil.format(ctrl_temp, m));
 
-            FileUtil.writeFrom(new File(getBaseDir(packageDir, "service"),
+            FileUtil.write(new File(getBaseDir(packageDir, "service"),
                             entityName + "Service.java"),
                     InterpolationUtil.format(svc_temp, m));
 
@@ -65,7 +65,7 @@ public class SpringProjectGen {
                     .map(it -> field(it, "Service"))
                     .collect(Collectors.joining("\n"));
             if (!fields.isEmpty()) fields = fields + "\n";
-            FileUtil.writeFrom(new File(getBaseDir(packageDir, "service/impl"),
+            FileUtil.write(new File(getBaseDir(packageDir, "service/impl"),
                             entityName + "ServiceImpl.java"),
                     InterpolationUtil.format(InterpolationUtil.format(
                             impl_temp, Collections.singletonMap("fields", fields)), m));
@@ -74,7 +74,7 @@ public class SpringProjectGen {
                     .map(it -> field(it, "Dao"))
                     .collect(Collectors.joining("\n"));
             if (!fields.isEmpty()) fields = fields + "\n";
-            FileUtil.writeFrom(new File(getBaseDir(packageDir, "dao"),
+            FileUtil.write(new File(getBaseDir(packageDir, "dao"),
                             entityName + "Dao.java"),
                     InterpolationUtil.format(InterpolationUtil.format(
                             dao_temp, Collections.singletonMap("fields", fields)), m));

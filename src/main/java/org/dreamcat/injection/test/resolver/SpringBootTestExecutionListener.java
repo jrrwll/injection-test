@@ -1,8 +1,9 @@
 package org.dreamcat.injection.test.resolver;
 
-import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_BASE_PACKAGES;
-import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_ENABLE_SIMPLE_CONVENTION;
-import static org.dreamcat.injection.test.resolver.SpringBootTestExecutionListener.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERNS;
+import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_BASE_PACKAGES;
+import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_ENABLE_SIMPLE_CONVENTION;
+import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_EXPR_VALUE_PROVIDER;
+import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERNS;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -17,7 +18,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -101,6 +101,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         InjectionFactory.Builder builder = InjectionFactory.builder()
                 .failOnThrow(false)
                 .addBasePackage(basePackageSet)
+                .outOfBox()
                 .addResourceMapping(Component.class, Component::value)
                 .addResourceMapping(Service.class, Service::value)
                 // Note that Spring @Bean is supported partially
@@ -200,33 +201,6 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
             ann -> (String) ReflectUtil.invoke(ann, "value");
     private static final Function<Object, String> emptyNameGetter = ann -> "";
 
-    @Getter
-    @RequiredArgsConstructor
-    enum EnvOrProperty {
-        // INJECTION_TEST_BASE_PACKAGES=org.myorg.a,org.myorg.b
-        INJECTION_TEST_BASE_PACKAGES(
-                "org.dreamcat.injection.test.base_packages"),
-        // INJECTION_TEST_ENABLE_SIMPLE_CONVENTION=1
-        INJECTION_TEST_ENABLE_SIMPLE_CONVENTION(
-                "org.dreamcat.injection.test.enable_simple_convention"),
-        // INJECTION_TEST_IGNORE_CLASS_PATTERNS=^.*?Test$
-        INJECTION_TEST_IGNORE_CLASS_PATTERNS(
-                "org.dreamcat.injection.test.ignore_class_patterns"),
-        ;
-
-        private final String propertyName;
-
-        public String get(Map<String, String> properties) {
-            String v = properties.get(name());
-            if (StringUtil.isNotEmpty(v)) return v;
-            v = properties.get(propertyName);
-            if (StringUtil.isNotEmpty(v)) return v;
-            v = System.getenv(name());
-            if (StringUtil.isNotEmpty(v)) return v;
-            return System.getProperty(propertyName);
-        }
-    }
-
     private void configIgnorePredicate(
             InjectionFactory.Builder builder, Map<String, String> properties) {
         List<Predicate<Class<?>>> ignorePredicates = new ArrayList<>();
@@ -258,6 +232,26 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 }
                 return false;
             });
+        }
+
+        // @Value
+        String exprVarProviderClassName = INJECTION_TEST_EXPR_VALUE_PROVIDER.get(properties);
+        Class<?> exprVarProviderClass = ReflectUtil.forNameOrNull(exprVarProviderClassName);
+
+        Function<String, Object> exprValueProvider = null;
+        if (exprVarProviderClass != null) {
+            if (!ReflectUtil.isAssignable(Function.class, exprVarProviderClass)) {
+                log.error("build TestExecutionListener failed: {} is invalid", exprVarProviderClassName);
+            } else {
+                exprValueProvider = (Function<String, Object>) ReflectUtil.newInstance(exprVarProviderClass);
+            }
+        } else {
+            SpringConfigParser configParser = new SpringConfigParser();
+            Map<String, Object> exprVars = configParser.parseExprVars();
+            exprValueProvider = exprVars::get;
+        }
+        if (exprValueProvider != null) {
+            builder.exprValueProvider(exprValueProvider);
         }
     }
 
