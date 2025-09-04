@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import org.dreamcat.common.util.StringUtil;
 import org.dreamcat.injection.test.context.TestContextManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -147,6 +149,18 @@ public class InjectionExtension implements
 
         public InjectionExtension build() {
             return new InjectionExtension(properties);
+        }
+    }
+
+    public enum Property {
+
+        base_packages,
+        ignore_class_patterns,
+        expr_value_provider,
+        ;
+
+        public String get(Map<String, String> properties) {
+            return properties.get(name());
         }
     }
 }

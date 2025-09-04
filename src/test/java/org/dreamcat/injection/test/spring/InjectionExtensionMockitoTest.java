@@ -2,8 +2,6 @@ package org.dreamcat.injection.test.spring;
 
 import static org.mockito.ArgumentMatchers.anyString;
 
-import java.util.Collections;
-import java.util.Map;
 import org.dreamcat.injection.test.InjectionExtension;
 import org.dreamcat.injection.test.spring.hello.service.BookService;
 import org.dreamcat.injection.test.spring.hello.service.HelloService;
@@ -17,6 +15,9 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Jerry Will

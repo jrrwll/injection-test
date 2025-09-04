@@ -1,12 +1,19 @@
 package org.dreamcat.injection.test.resolver;
 
-import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_BASE_PACKAGES;
-import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_ENABLE_SIMPLE_CONVENTION;
-import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_EXPR_VALUE_PROVIDER;
-import static org.dreamcat.injection.test.resolver.EnvOrProperty.INJECTION_TEST_IGNORE_CLASS_PATTERNS;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.dreamcat.common.di.InjectionFactory;
+import org.dreamcat.common.util.ObjectUtil;
+import org.dreamcat.common.util.ReflectUtil;
+import org.dreamcat.common.util.StringUtil;
+import org.dreamcat.injection.test.InjectionExtension.Property;
+import org.dreamcat.injection.test.context.TestContext;
+import org.dreamcat.injection.test.context.TestExecutionListener;
+import org.dreamcat.injection.test.context.TestExecutionListenerManager;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,37 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.dreamcat.common.di.InjectionFactory;
-import org.dreamcat.common.util.ObjectUtil;
-import org.dreamcat.common.util.ReflectUtil;
-import org.dreamcat.common.util.StringUtil;
-import org.dreamcat.injection.test.context.TestContext;
-import org.dreamcat.injection.test.context.TestExecutionListener;
-import org.dreamcat.injection.test.context.TestExecutionListenerManager;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
 /**
  * @author Jerry Will
  * @version 2022-10-13
  */
 @Slf4j
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"unchecked"})
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class SpringBootTestExecutionListener implements TestExecutionListener {
 
@@ -65,9 +50,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
                 testClass, ComponentScan.class);
         String[] defaultBasePackages = null;
         if (sba == null && cs == null) {
-            String basePackages = INJECTION_TEST_BASE_PACKAGES.get(properties);
-            if (StringUtil.isEmpty(basePackages)) return null;
-            defaultBasePackages = basePackages.split(",");
+            defaultBasePackages = new String[]{testClass.getPackage().getName()};
         }
         return new SpringBootTestExecutionListener(
                 testClass, properties, sba, cs, defaultBasePackages);
@@ -98,50 +81,13 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         } else {
             basePackageSet.add(testClass.getPackage().getName());
         }
+
         InjectionFactory.Builder builder = InjectionFactory.builder()
                 .failOnThrow(false)
                 .addBasePackage(basePackageSet)
-                .outOfBox()
-                .addResourceMapping(Component.class, Component::value)
-                .addResourceMapping(Service.class, Service::value)
-                // Note that Spring @Bean is supported partially
-                .addResourceMapping(Bean.class, it -> it.name().length > 0 ? it.name()[0] : "")
-                .addInjectMapping(Qualifier.class, Qualifier::value)
-                .addInjectMapping(Autowired.class, (Function) emptyNameGetter);
+                .outOfBox();
 
-        boolean enableSimpleConvention = StringUtil.isTrueString(
-                INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get(properties));
-        if (!enableSimpleConvention) {
-            builder.addResourceMapping(Configuration.class, Configuration::value)
-                    .addResourceMapping(Repository.class, Repository::value)
-                    .addResourceMapping(Controller.class, Controller::value)
-                    .addResourceMapping(SpringBootApplication.class, (Function) emptyNameGetter);
-
-            if (springRestControllerClass != null) {
-                builder.addResourceMapping(springRestControllerClass, (Function) valueGetter);
-            }
-        }
-
-        if (javaxResourceClass != null) {
-            builder.addInjectMapping(javaxResourceClass, (Function) nameGetter);
-            builder.addPostConstruct(javaxPostConstructClass);
-        }
-        // JSR-330
-        if (javaxInjectInjectClass != null) {
-            builder.addInjectMapping(javaxInjectInjectClass, (Function) emptyNameGetter);
-            builder.addResourceMapping(javaxInjectNamedClass, (Function) valueGetter);
-        }
-
-        if (springMockBeanClass != null && springSpyBeanClass != null &&
-                mockitoClass != null) {
-            builder.addMockInjectMapping(springMockBeanClass, nameGetter, this::mock);
-            builder.addSpyInjectMapping(springSpyBeanClass, nameGetter, this::spy);
-        }
-        if (mockitoClass != null) {
-            builder.addMockInjectMapping(mockClass, nameGetter, this::mock);
-            builder.addSpyInjectMapping(spyClass, emptyNameGetter, this::spy);
-        }
-        configIgnorePredicate(builder, properties);
+        configWithProperties(builder, properties);
         this.di = builder.build();
     }
 
@@ -150,6 +96,7 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         Class<?> testClass = testContext.getTestClass();
         Object testInstance = testContext.getTestInstance();
         try {
+            di.preResolve();
             di.resolveMockBeans(testClass, testInstance);
             di.resolveConstruct();
 
@@ -162,96 +109,38 @@ public class SpringBootTestExecutionListener implements TestExecutionListener {
         }
     }
 
-    private static final Class javaxResourceClass =
-            ReflectUtil.forNameOrNull("javax.annotation.Resource");
-    private static final Class javaxPostConstructClass =
-            ReflectUtil.forNameOrNull("javax.annotation.PostConstruct");
-    private static final Class javaxInjectInjectClass =
-            ReflectUtil.forNameOrNull("javax.inject.Inject"); // inject beans
-    private static final Class javaxInjectNamedClass =
-            ReflectUtil.forNameOrNull("javax.inject.Named"); // define beans
-    private static final Class mockitoClass =
-            ReflectUtil.forNameOrNull("org.mockito.Mockito");
-    private static final Class mockClass =
-            ReflectUtil.forNameOrNull("org.mockito.Mock");
-    private static final Class spyClass =
-            ReflectUtil.forNameOrNull("org.mockito.Spy");
-    private static final Class springMockBeanClass =
-            ReflectUtil.forNameOrNull("org.springframework.boot.test.mock.mockito.MockBean");
-    private static final Class springSpyBeanClass =
-            ReflectUtil.forNameOrNull("org.springframework.boot.test.mock.mockito.SpyBean");
-    private static final Class springRestControllerClass =
-            ReflectUtil.forNameOrNull("org.springframework.web.bind.annotation.RestController");
-
-    @SneakyThrows
-    private Object mock(Class<?> clazz) {
-        Method method = mockitoClass.getDeclaredMethod("mock", Class.class);
-        return method.invoke(null, clazz);
-    }
-
-    @SneakyThrows
-    private Object spy(Object value) {
-        Method method = mockitoClass.getDeclaredMethod("spy", Object.class);
-        return method.invoke(null, value);
-    }
-
-    private static final Function<Object, String> nameGetter =
-            ann -> (String) ReflectUtil.invoke(ann, "name");
-    private static final Function<Object, String> valueGetter =
-            ann -> (String) ReflectUtil.invoke(ann, "value");
-    private static final Function<Object, String> emptyNameGetter = ann -> "";
-
-    private void configIgnorePredicate(
+    private void configWithProperties(
             InjectionFactory.Builder builder, Map<String, String> properties) {
-        List<Predicate<Class<?>>> ignorePredicates = new ArrayList<>();
-        String ignoreClassPatterns = INJECTION_TEST_IGNORE_CLASS_PATTERNS.get(properties);
-        List<Pattern> patterns = new ArrayList<>();
+        String ignoreClassPatterns = Property.ignore_class_patterns.get(properties);;
         if (StringUtil.isNotEmpty(ignoreClassPatterns)) {
-            patterns.addAll(Arrays.stream(ignoreClassPatterns.split(","))
+            List<Pattern> patterns = Arrays.stream(ignoreClassPatterns.split(","))
                     .filter(StringUtil::isNotEmpty)
-                    .map(Pattern::compile).collect(Collectors.toList()));
+                    .map(Pattern::compile).collect(Collectors.toList());
+            builder.addIgnoreClassPattern( patterns);
         }
-        String enableSimpleConvention = INJECTION_TEST_ENABLE_SIMPLE_CONVENTION.get(properties);
-        if (StringUtil.isTrueString(enableSimpleConvention)) {
-            patterns.add(generatedClassName1);
-            patterns.add(generatedClassName2);
-        }
-        if (!patterns.isEmpty()) {
-            ignorePredicates.add(clazz -> {
-                String name = clazz.getName();
-                for (Pattern pattern : patterns) {
-                    if (pattern.matcher(name).matches()) return true;
-                }
-                return false;
-            });
-        }
-        if (!ignorePredicates.isEmpty()) {
-            builder.ignorePredicate(clazz -> {
-                for (Predicate<Class<?>> ignorePredicate : ignorePredicates) {
-                    if (ignorePredicate.test(clazz)) return true;
-                }
-                return false;
-            });
-        }
+        builder.addIgnoreClassPattern(generatedClassName1);
+        builder.addIgnoreClassPattern(generatedClassName2);
 
         // @Value
-        String exprVarProviderClassName = INJECTION_TEST_EXPR_VALUE_PROVIDER.get(properties);
-        Class<?> exprVarProviderClass = ReflectUtil.forNameOrNull(exprVarProviderClassName);
+        String exprVarProviderClassName = Property.expr_value_provider.get(properties);
+        if (exprVarProviderClassName != null) {
+            Class<?> exprVarProviderClass = ReflectUtil.forNameOrNull(exprVarProviderClassName);
 
-        Function<String, Object> exprValueProvider = null;
-        if (exprVarProviderClass != null) {
-            if (!ReflectUtil.isAssignable(Function.class, exprVarProviderClass)) {
-                log.error("build TestExecutionListener failed: {} is invalid", exprVarProviderClassName);
+            Function<String, Object> exprValueProvider = null;
+            if (exprVarProviderClass != null) {
+                if (!ReflectUtil.isAssignable(Function.class, exprVarProviderClass)) {
+                    log.error("build TestExecutionListener failed: {} is invalid", exprVarProviderClassName);
+                } else {
+                    exprValueProvider = (Function<String, Object>) ReflectUtil.newInstance(exprVarProviderClass);
+                }
             } else {
-                exprValueProvider = (Function<String, Object>) ReflectUtil.newInstance(exprVarProviderClass);
+                SpringConfigParser configParser = new SpringConfigParser();
+                Map<String, Object> exprVars = configParser.parseExprVars();
+                exprValueProvider = exprVars::get;
             }
-        } else {
-            SpringConfigParser configParser = new SpringConfigParser();
-            Map<String, Object> exprVars = configParser.parseExprVars();
-            exprValueProvider = exprVars::get;
-        }
-        if (exprValueProvider != null) {
-            builder.exprValueProvider(exprValueProvider);
+            if (exprValueProvider != null) {
+                builder.exprValueProvider(exprValueProvider);
+            }
         }
     }
 

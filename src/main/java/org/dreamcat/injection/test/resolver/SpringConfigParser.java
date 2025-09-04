@@ -1,7 +1,5 @@
 package org.dreamcat.injection.test.resolver;
 
-
-import lombok.SneakyThrows;
 import org.dreamcat.common.Pair;
 import org.dreamcat.common.json.JavaPropsUtil;
 import org.dreamcat.common.json.YamlUtil;
@@ -57,11 +55,25 @@ public class SpringConfigParser {
                     path = "application." + extension;
                 }
 
+                String configContent = FunctionUtil.invokeOrNull(() ->
+                        ClassLoaderUtil.getResourceAsString("config/" + path));
                 String content = FunctionUtil.invokeOrNull(() ->
                         ClassLoaderUtil.getResourceAsString(path));
-                if (content == null) continue;
-                Map<String, Object> config = mapper.apply(content);
-                return MapUtil.flat(config);
+
+                Map<String, Object> configContentMap = new HashMap<>();
+                if (configContent != null) {
+                    configContentMap = MapUtil.flat(mapper.apply(configContent));
+                }
+
+                Map<String, Object> contentMap = new HashMap<>();
+                if (content != null) {
+                    contentMap = MapUtil.flat(mapper.apply(content));
+                }
+                if (contentMap.isEmpty() && configContentMap.isEmpty()) {
+                    continue;
+                }
+                MapUtil.merge(contentMap, configContentMap);
+                return contentMap;
             }
         }
         return new HashMap<>();
