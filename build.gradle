@@ -13,8 +13,11 @@ repositories {
 group GROUP_ID
 version VERSION
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 jar.enabled = true
 bootJar.enabled = false
 
@@ -27,37 +30,19 @@ sourceSets {
     }
 }
 
-ext {
-    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    slf4jVersion = "1.7.36"
-    // https://mvnrepository.com/artifact/org.projectlombok/lombok
-    lombokVersion = "1.18.26"
-    // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
-    junitVersion = "5.9.2"
-    // https://mvnrepository.com/artifact/org.junit.platform/junit-platform-commons
-    junitPlatformVersion = "1.9.2"
-    // https://mvnrepository.com/artifact/org.openjdk.jmh/jmh-core
-    jmhVersion = "1.36"
-    // https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
-    mockitoVersion = "5.2.0"
-    // https://mvnrepository.com/artifact/org.javassist/javassist
-    javassistVersion = '3.29.2-GA'
-}
-
 dependencies {
-    compileOnly "org.projectlombok:lombok:$lombokVersion"
-    annotationProcessor "org.projectlombok:lombok:$lombokVersion"
-    testCompileOnly "org.projectlombok:lombok:$lombokVersion"
-    testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
-    implementation "org.slf4j:slf4j-api:$slf4jVersion"
-    implementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
-    implementation "org.junit.platform:junit-platform-commons:$junitPlatformVersion"
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    testCompileOnly libs.lombok
+    testAnnotationProcessor libs.lombok
+    implementation libs.slf4j.api
 
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
-    testImplementation "org.openjdk.jmh:jmh-core:$jmhVersion"
-    testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
+    implementation libs.jupiter.api
+    implementation libs.junit.platform.commons
+    testRuntimeOnly libs.jupiter.engine
 
-    implementation "org.dreamcat:common:0.5-SNAPSHOT"
+    implementation libs.dreamcat.common
+
     compileOnly 'org.springframework.boot:spring-boot'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 
@@ -65,7 +50,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-autoconfigure"
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.springframework:spring-test"
-    testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
+    testImplementation libs.mockito.junit.jupiter
 
     testImplementation "org.springframework.boot:spring-boot-starter-web"
     testImplementation "org.springframework.boot:spring-boot-starter-jdbc"
@@ -75,4 +60,4 @@ test {
     useJUnitPlatform()
 }
 
-apply from: "./publish.gradle"
+apply from: new File(rootDir, 'gradle/publish.gradle')

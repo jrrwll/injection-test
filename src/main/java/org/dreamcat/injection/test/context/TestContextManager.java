@@ -26,6 +26,8 @@ public class TestContextManager {
         this.testContextHolder = ThreadLocal.withInitial(
                 TestContextManager.this.testContext::copy);
         this.testExecutionListeners = new ArrayList<>();
+
+
         this.registerTestExecutionListeners(
                 TestExecutionListenerManager.resolveTestExecutionListeners(testClass, properties));
     }

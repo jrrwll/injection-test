@@ -23,8 +23,6 @@ import java.util.Map;
  * @author Jerry Will
  * @version 2022-10-13
  */
-// INJECTION_TEST_BASE_PACKAGES=org.dreamcat.injection.test.spring
-// @SpringBootApplication
 @ExtendWith(InjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InjectionExtensionMockitoTest {

@@ -147,6 +147,11 @@ public class InjectionExtension implements
             return this;
         }
 
+        public Builder property(Property name, String value) {
+            properties.put(name.name(), value);
+            return this;
+        }
+
         public InjectionExtension build() {
             return new InjectionExtension(properties);
         }
@@ -155,12 +160,8 @@ public class InjectionExtension implements
     public enum Property {
 
         base_packages,
+        application_class,
         ignore_class_patterns,
         expr_value_provider,
-        ;
-
-        public String get(Map<String, String> properties) {
-            return properties.get(name());
-        }
     }
 }

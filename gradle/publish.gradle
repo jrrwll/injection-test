@@ -1,0 +1,115 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+/*
+https://central.sonatype.com/account
+
+User Token -> oss.username/oss.password
+
+https://central.sonatype.com/namespace/org.dreamcat
+*/
+def releasesRepoUrl = "https://central.sonatype.com/repository/maven-releases"
+def snapshotsRepoUrl = "https://central.sonatype.com/repository/maven-snapshots"
+def isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+javadoc {
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}
+
+tasks.register('sourcesJar', Jar) {
+    onlyIf { isReleaseVersion }
+    archiveClassifier.set 'sources'
+    from sourceSets.main.allJava
+}
+
+tasks.register('javadocJar', Jar) {
+    onlyIf { isReleaseVersion }
+    archiveClassifier.set 'javadoc'
+    from javadoc.destinationDir
+}
+
+if (isReleaseVersion) {
+    artifacts {
+        archives javadocJar, sourcesJar
+    }
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name LICENCE_NAME
+            url LICENCE_URL
+            distribution LICENCE_DIST
+        }
+    }
+    developers {
+        developer {
+            id DEVELOPER_ID
+            name DEVELOPER_NAME
+            email DEVELOPER_EMAIL
+        }
+    }
+    scm {
+        url PROJECT_URL
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            // don't share source code any more
+            // if (isReleaseVersion) {
+            //     artifact sourcesJar
+            //     artifact javadocJar
+            // }
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+
+            groupId project.group
+            artifactId project.name
+            version project.version
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', project.name)
+                root.appendNode('url', PROJECT_URL)
+                root.appendNode('description', PROJECT_DESCRIPTION)
+                root.children().last() + pomConfig
+            }
+
+            // testFixtures in Gradle 6+ is supported
+            suppressPomMetadataWarningsFor("testFixturesApiElements")
+            suppressPomMetadataWarningsFor("testFixturesRuntimeElements")
+        }
+    }
+
+    repositories {
+        maven {
+            url isReleaseVersion ? releasesRepoUrl : snapshotsRepoUrl
+            credentials {
+                username project.findProperty("oss.username") as String
+                password project.findProperty("oss.password") as String
+            }
+        }
+    }
+}
+
+tasks.withType(Sign).configureEach {
+    onlyIf { isReleaseVersion }
+}
+
+// signing.keyId, signing.password, signing.secretKeyRingFile
+signing {
+    required { isReleaseVersion }
+    sign publishing.publications.maven
+}
