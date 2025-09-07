@@ -1,14 +1,15 @@
 package org.dreamcat.injection.test.context;
 
+import lombok.extern.slf4j.Slf4j;
+import org.dreamcat.common.util.ExceptionUtil;
+import org.dreamcat.injection.test.resolver.InjectionTestExecutionListener;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import org.dreamcat.common.util.ExceptionUtil;
 
 /**
  * @author Jerry Will
@@ -27,15 +28,15 @@ public class TestContextManager {
                 TestContextManager.this.testContext::copy);
         this.testExecutionListeners = new ArrayList<>();
 
-
-        this.registerTestExecutionListeners(
-                TestExecutionListenerManager.resolveTestExecutionListeners(testClass, properties));
+        List<TestExecutionListener> listeners = InjectionTestExecutionListener.getEnabledListeners(
+                testClass, properties);
+        this.registerTestExecutionListeners(listeners);
     }
 
     public void registerTestExecutionListeners(List<TestExecutionListener> testExecutionListeners) {
         for (TestExecutionListener listener : testExecutionListeners) {
-            if (log.isTraceEnabled()) {
-                log.trace("Registering TestExecutionListener: " + listener);
+            if (log.isDebugEnabled()) {
+                log.debug("Registering TestExecutionListener: {}", listener);
             }
             this.testExecutionListeners.add(listener);
         }

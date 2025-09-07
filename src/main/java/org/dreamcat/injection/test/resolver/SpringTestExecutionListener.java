@@ -4,8 +4,6 @@ package org.dreamcat.injection.test.resolver;
 import org.dreamcat.common.util.ArrayUtil;
 import org.dreamcat.common.util.ObjectUtil;
 import org.dreamcat.common.util.ReflectUtil;
-import org.dreamcat.common.util.StringUtil;
-import org.dreamcat.injection.test.InjectionExtension.Property;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
@@ -20,22 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @author Jerry Will
  * @version 2025-09-05
  */
 public class SpringTestExecutionListener extends InjectionTestExecutionListener {
-
-    public static boolean isEnable() {
-        try {
-            Class.forName("org.springframework.boot.autoconfigure.SpringBootApplication");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
 
     public SpringTestExecutionListener(Class<?> testClass, Map<String, String> properties) {
         super(testClass, properties);

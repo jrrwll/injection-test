@@ -23,15 +23,6 @@ import java.util.function.Function;
  */
 public class RitaTestExecutionListener extends InjectionTestExecutionListener {
 
-    public static boolean isEnable() {
-        try {
-            Class.forName("org.dreamcat.rita.boot.RitaBootApplication");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
-
     public RitaTestExecutionListener(Class<?> testClass, Map<String, String> properties) {
         super(testClass, properties);
     }

@@ -9,6 +9,7 @@ import org.dreamcat.injection.test.InjectionExtension.Property;
 import org.dreamcat.injection.test.context.TestContext;
 import org.dreamcat.injection.test.context.TestExecutionListener;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,20 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"unchecked"})
 @RequiredArgsConstructor
 public abstract class InjectionTestExecutionListener implements TestExecutionListener {
+
+    private static final String springClass = "org.springframework.boot.SpringApplication";
+    private static final String ritaClass = "org.dreamcat.rita.boot.RitaBootApplication";
+
+    public static List<TestExecutionListener> getEnabledListeners(Class<?> testClass, Map<String, String> properties) {
+        List<TestExecutionListener> listeners = new ArrayList<>();
+        if (ReflectUtil.forNameOrNull(springClass) != null) {
+            listeners.add(new SpringTestExecutionListener(testClass, properties));
+        }
+        if (ReflectUtil.forNameOrNull(ritaClass) != null) {
+            listeners.add(new RitaTestExecutionListener(testClass, properties));
+        }
+        return listeners;
+    }
 
     private final Class<?> testClass;
     private final Map<String, String> properties;
