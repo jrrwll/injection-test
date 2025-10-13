@@ -1,14 +1,5 @@
 package org.dreamcat.injection.test;
 
-import java.lang.reflect.Executable;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
-import org.dreamcat.common.util.StringUtil;
 import org.dreamcat.injection.test.context.TestContextManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -22,6 +13,14 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
+
+import java.lang.reflect.Executable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Jerry Will
@@ -140,6 +139,7 @@ public class InjectionExtension implements
         .build();
      */
     public static class Builder {
+
         private final Map<String, String> properties = new HashMap<>();
 
         public Builder property(String name, String value) {

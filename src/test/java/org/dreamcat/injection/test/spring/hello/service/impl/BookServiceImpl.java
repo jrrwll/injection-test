@@ -1,14 +1,15 @@
 package org.dreamcat.injection.test.spring.hello.service.impl;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import org.dreamcat.common.util.MapUtil;
 import org.dreamcat.injection.test.spring.hello.service.BookService;
 import org.dreamcat.injection.test.spring.hello.service.HelloService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Jerry Will

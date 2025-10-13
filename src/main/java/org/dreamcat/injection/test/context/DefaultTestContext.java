@@ -1,8 +1,9 @@
 package org.dreamcat.injection.test.context;
 
-import java.lang.reflect.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.Method;
 
 /**
  * @author Jerry Will

@@ -100,7 +100,7 @@ public class ProfileExprValueResolver {
         } else {
             File profileFile = new File(profileDir, path);
             if (!profileFile.exists()) return null;
-            return FunctionUtil.invokeOrNull( () -> FileUtil.readAsString(profileFile));
+            return FunctionUtil.invokeOrNull(() -> FileUtil.readAsString(profileFile));
         }
     }
 }

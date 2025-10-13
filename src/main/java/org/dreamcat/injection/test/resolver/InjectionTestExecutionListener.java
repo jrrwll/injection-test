@@ -106,7 +106,7 @@ public abstract class InjectionTestExecutionListener implements TestExecutionLis
             List<Pattern> patterns = Arrays.stream(ignoreClassPatterns.split(","))
                     .filter(StringUtil::isNotEmpty)
                     .map(Pattern::compile).collect(Collectors.toList());
-            builder.addIgnoreClassPattern( patterns);
+            builder.addIgnoreClassPattern(patterns);
         }
         builder.addIgnoreClassPattern(generatedClassName1);
         builder.addIgnoreClassPattern(generatedClassName2);
