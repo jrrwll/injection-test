@@ -13,7 +13,9 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 @Repository
 public class ${Entity}Dao {
-    $fields
+
+$fields
+
     public Long create${Entity}($Entity entity) {
         return 0L;
     }
