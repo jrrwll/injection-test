@@ -25,5 +25,4 @@ public class RitaTestExecutionListener extends InjectionTestExecutionListener {
         Map<String, Object> exprVars = exprValueResolver.parseExprVars();
         return exprVars::get;
     }
-    
 }
