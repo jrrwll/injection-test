@@ -73,21 +73,31 @@ public class SpringTestExecutionListener extends InjectionTestExecutionListener 
 
     /// parse expr vars
     static TriFunction<String, String, String, List<PropertySource<?>>> yamlFn = (ext, prefix, profile) -> {
-        YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
+        String path = String.format("%sapplication%s.%s",
+                prefix, profile == null ? "" : "-" + profile, ext);
+        ClassPathResource resource = new ClassPathResource(path);
+        if (!resource.exists()) {
+            return Collections.emptyList();
+        }
 
         try {
-            String path = String.format("%sapplication%s.%s", prefix, profile, ext);
-            return loader.load(
-                    "application", new ClassPathResource(path));
+            YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
+            return loader.load(path, resource);
         } catch (IOException e) {
             return Collections.emptyList();
         }
     };
 
     static TriFunction<String, String, String, List<PropertySource<?>>> propsFn = (ext, prefix, profile) -> {
-        String location = String.format("classpath:%sapplication%s.%s", prefix, profile, ext);
+        String path = String.format("%sapplication%s.%s",
+                prefix, profile == null ? "" : "-" + profile, ext);
+        ClassPathResource resource = new ClassPathResource(path);
+        if (!resource.exists()) {
+            return Collections.emptyList();
+        }
+
         try {
-            ResourcePropertySource propertySource = new ResourcePropertySource(location);
+            ResourcePropertySource propertySource = new ResourcePropertySource(resource);
             return Collections.singletonList(propertySource);
         } catch (IOException e) {
             return Collections.emptyList();
