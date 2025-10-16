@@ -21,9 +21,9 @@ public class RitaTestExecutionListener extends InjectionTestExecutionListener {
 
     @Override
     protected Function<String, Object> resolveExprValueProviderForConfig() {
-        ProfileExprValueRe
-        solver exprValueResolver = new ProfileExprValueResolver();
+        ProfileExprValueResolver exprValueResolver = new ProfileExprValueResolver();
         Map<String, Object> exprVars = exprValueResolver.parseExprVars();
         return exprVars::get;
     }
+    
 }
