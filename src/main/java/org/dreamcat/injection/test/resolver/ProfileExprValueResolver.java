@@ -8,11 +8,16 @@ import org.dreamcat.common.json.JavaPropsUtil;
 import org.dreamcat.common.json.JsonUtil;
 import org.dreamcat.common.json.TomlUtil;
 import org.dreamcat.common.json.YamlUtil;
+import org.dreamcat.common.text.InterpolationUtil;
 import org.dreamcat.common.util.ClassLoaderUtil;
 import org.dreamcat.common.util.FunctionUtil;
 import org.dreamcat.common.util.MapUtil;
+import org.dreamcat.common.util.ReflectUtil;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +36,27 @@ public class ProfileExprValueResolver {
     private String baseName = "application";
     private String profileKey = "rita.profiles.active";
     private String profileDir; // null means classpath
+
+    public static <A extends Annotation> void inject(
+            Object bean, Class<A> annoClass, Function<A, String> valueGetter,
+            Map<String, Object> exprVars) {
+        Function<String, Object> exprValueProvider = exprVars::get;
+
+        List<Field> fields = ReflectUtil.retrieveBeanFields(bean.getClass());
+        for (Field field : fields) {
+            A injectedValue = field.getDeclaredAnnotation(annoClass);
+            if (injectedValue == null) continue;
+
+            String expr = valueGetter.apply(injectedValue);
+            String value = InterpolationUtil.formatEl(expr, exprValueProvider);
+            // format nested variables
+            if (value.contains("$")) {
+                value = InterpolationUtil.formatEl(value, exprValueProvider);
+            }
+            Object fieldValue = ReflectUtil.parse(value, field.getType());
+            ReflectUtil.setFieldValue(bean, field, fieldValue);
+        }
+    }
 
     /// parse expr vars
     private static final List<Pair<Function<String, Map<String, Object>>, List<String>>> extensions = Arrays.asList(

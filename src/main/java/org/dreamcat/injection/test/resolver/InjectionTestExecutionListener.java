@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public abstract class InjectionTestExecutionListener implements TestExecutionListener {
 
     private static final String springClass = "org.springframework.boot.SpringApplication";
-    private static final String ritaClass = "org.dreamcat.rita.boot.RitaBootApplication";
+    private static final String ritaClass = "org.dreamcat.rita.boot.RitaApplication";
 
     public static List<TestExecutionListener> getEnabledListeners(Class<?> testClass, Map<String, String> properties) {
         List<TestExecutionListener> listeners = new ArrayList<>();
